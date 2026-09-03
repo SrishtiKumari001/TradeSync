@@ -1,0 +1,306 @@
+{
+  "info": {
+    "name": "Mini ERP + CRM Operations Portal",
+    "description": "REST API for the Mini ERP + CRM Operations Portal. Set the `baseUrl` collection variable (default http://localhost:5000), then run Login first - the token is stored automatically and used by all other requests.\n\nDemo accounts (seeded):\n- admin@minierp.com / Admin@123 (ADMIN)\n- sales@minierp.com / Sales@123 (SALES)\n- warehouse@minierp.com / Warehouse@123 (WAREHOUSE)\n- accounts@minierp.com / Accounts@123 (ACCOUNTS)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "customerId", "value": "1" },
+    { "key": "productId", "value": "1" },
+    { "key": "challanId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"sales@minierp.com\",\n  \"password\": \"Sales@123\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "pm.collectionVariables.set('token', res.token);",
+                  "pm.test('Login returns token', () => pm.expect(res.token).to.be.a('string'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get current user (me)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/auth/me", "host": ["{{baseUrl}}"], "path": ["api", "auth", "me"] }
+          }
+        },
+        {
+          "name": "List users (Admin only)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/auth", "host": ["{{baseUrl}}"], "path": ["api", "auth"] }
+          }
+        },
+        {
+          "name": "Create user (Admin only)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"New Sales Rep\",\n  \"email\": \"new.sales@minierp.com\",\n  \"password\": \"Password123\",\n  \"role\": \"SALES\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/auth", "host": ["{{baseUrl}}"], "path": ["api", "auth"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customers",
+      "item": [
+        {
+          "name": "List customers (search + filters + pagination)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/customers?search=&type=&status=&page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customers"],
+              "query": [
+                { "key": "search", "value": "" },
+                { "key": "type", "value": "", "description": "RETAIL | WHOLESALE | DISTRIBUTOR" },
+                { "key": "status", "value": "", "description": "LEAD | ACTIVE | INACTIVE" },
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get customer",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/customers/{{customerId}}", "host": ["{{baseUrl}}"], "path": ["api", "customers", "{{customerId}}"] }
+          }
+        },
+        {
+          "name": "Create customer",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Amit Traders\",\n  \"mobile\": \"9810012345\",\n  \"email\": \"amit@traders.in\",\n  \"businessName\": \"Amit Traders\",\n  \"gstNumber\": \"27ABCDE1234F1Z5\",\n  \"type\": \"WHOLESALE\",\n  \"address\": \"Shop 5, Main Bazaar, Delhi\",\n  \"status\": \"LEAD\",\n  \"followUpDate\": \"2026-09-01T00:00:00.000Z\",\n  \"notes\": \"Introductory meeting booked.\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/customers", "host": ["{{baseUrl}}"], "path": ["api", "customers"] }
+          }
+        },
+        {
+          "name": "Update customer",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"ACTIVE\",\n  \"followUpDate\": \"2026-09-05T00:00:00.000Z\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/customers/{{customerId}}", "host": ["{{baseUrl}}"], "path": ["api", "customers", "{{customerId}}"] }
+          }
+        },
+        {
+          "name": "List follow-ups",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/customers/{{customerId}}/follow-ups", "host": ["{{baseUrl}}"], "path": ["api", "customers", "{{customerId}}", "follow-ups"] }
+          }
+        },
+        {
+          "name": "Add follow-up note",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"note\": \"Customer agreed to a trial order.\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/customers/{{customerId}}/follow-ups", "host": ["{{baseUrl}}"], "path": ["api", "customers", "{{customerId}}", "follow-ups"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products & Inventory",
+      "item": [
+        {
+          "name": "List products (search + filters + pagination)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/products?search=&category=&lowStock=false&page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"],
+              "query": [
+                { "key": "search", "value": "" },
+                { "key": "category", "value": "" },
+                { "key": "lowStock", "value": "false", "description": "true returns only products at or below minStockAlert" },
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get product",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/products/{{productId}}", "host": ["{{baseUrl}}"], "path": ["api", "products", "{{productId}}"] }
+          }
+        },
+        {
+          "name": "Create product (Warehouse/Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Masala Tea 500g\",\n  \"sku\": \"TEA-MSL-500\",\n  \"category\": \"Beverages\",\n  \"unitPrice\": 180,\n  \"currentStock\": 50,\n  \"minStockAlert\": 15,\n  \"location\": \"Aisle C3\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/products", "host": ["{{baseUrl}}"], "path": ["api", "products"] }
+          }
+        },
+        {
+          "name": "Update product (Warehouse/Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"unitPrice\": 190,\n  \"minStockAlert\": 20\n}" },
+            "url": { "raw": "{{baseUrl}}/api/products/{{productId}}", "host": ["{{baseUrl}}"], "path": ["api", "products", "{{productId}}"] }
+          }
+        },
+        {
+          "name": "Stock movement history",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/stock-movements?page=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}", "stock-movements"],
+              "query": [{ "key": "page", "value": "1" }, { "key": "pageSize", "value": "10" }]
+            }
+          }
+        },
+        {
+          "name": "Manual stock adjustment (Warehouse/Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"movementType\": \"IN\",\n  \"quantity\": 25,\n  \"reason\": \"New batch received\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/products/{{productId}}/stock-movements", "host": ["{{baseUrl}}"], "path": ["api", "products", "{{productId}}", "stock-movements"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Challans",
+      "item": [
+        {
+          "name": "List challans (search + status filter)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/challans?search=&status=&page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "challans"],
+              "query": [
+                { "key": "search", "value": "", "description": "Challan number (CHL-0001) or customer name" },
+                { "key": "status", "value": "", "description": "DRAFT | CONFIRMED | CANCELLED" },
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get challan",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/challans/{{challanId}}", "host": ["{{baseUrl}}"], "path": ["api", "challans", "{{challanId}}"] }
+          }
+        },
+        {
+          "name": "Create draft challan (Sales/Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": 1,\n  \"items\": [\n    { \"productId\": 1, \"quantity\": 10 },\n    { \"productId\": 4, \"quantity\": 20 }\n  ]\n}"
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "const res = pm.response.json();",
+                    "pm.collectionVariables.set('challanId', String(res.data.id));",
+                    "pm.test('Draft created', () => pm.expect(res.data.status).to.eql('DRAFT'));"
+                  ]
+                }
+              }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/challans", "host": ["{{baseUrl}}"], "path": ["api", "challans"] }
+          }
+        },
+        {
+          "name": "Update draft challan (Sales/Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"items\": [\n    { \"productId\": 1, \"quantity\": 15 }\n  ]\n}" },
+            "url": { "raw": "{{baseUrl}}/api/challans/{{challanId}}", "host": ["{{baseUrl}}"], "path": ["api", "challans", "{{challanId}}"] }
+          }
+        },
+        {
+          "name": "Confirm challan (Sales/Admin) - deducts stock",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/challans/{{challanId}}/confirm", "host": ["{{baseUrl}}"], "path": ["api", "challans", "{{challanId}}", "confirm"] }
+          }
+        },
+        {
+          "name": "Cancel challan (Sales/Admin) - restocks if confirmed",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/challans/{{challanId}}/cancel", "host": ["{{baseUrl}}"], "path": ["api", "challans", "{{challanId}}", "cancel"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Summary (KPIs, low stock, recent challans)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/dashboard/summary", "host": ["{{baseUrl}}"], "path": ["api", "dashboard", "summary"] }
+          }
+        }
+      ]
+    }
+  ]
+}
